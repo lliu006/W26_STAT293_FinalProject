@@ -1,4 +1,4 @@
-# STAT 293 Final Project -- Joint Longitudinal-Survival Analysis of Left Ventricular Mass Index After Aortic Valve Replacement
+# Joint Longitudinal-Survival Analysis of Left Ventricular Mass Index After Aortic Valve Replacement
 
 ## Winter 2026
 ## Instructor: Dr. Esra Kürüm
