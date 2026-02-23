@@ -6,11 +6,20 @@
 **Authors:** Ryan Kitagawa, Linlin Liu, and Nancy Lopez <br>
 **Date:** March 12, 2026
 
-**Primary Reference:** Lim, et al. (2008). A longitudinal study of the profile and predictors of left ventricular mass regression after stentless aortic valve replacement. *Ann Thorac Surg.* 2008; 85(6):2026 - 2029.
+**Primary Reference:** Lim, E., et al. (2008). A longitudinal study of the profile and predictors of left ventricular mass regression after stentless aortic valve replacement. *Ann Thorac Surg.* 2008; 85(6):2026 - 2029.
 
 ## Overview
 
 This project analyzes the postoperative trajectories of the left ventricular mass index (LVMI) and their association with time to death following aortic valuve replacement. Using an observational dataset with repeated measurements, we apply joint longitudinal-survival modeling to account for within-subject correlation and inform potential dropout due to the risk of mortality.
+
+## Objectives
+
+The goals of this project are to:
+
+- Characterize postoperative LVMI trajectories following aortic valve replacement  
+- Evaluate differences in LVMI evolution between valve types  
+- Quantify the association between evolving LVMI and mortality risk  
+- Assess robustness of findings through multiple imputation (MI) and sensitivity analyses 
 
 ## Research Questions
 
