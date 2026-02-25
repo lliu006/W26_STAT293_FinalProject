@@ -1,0 +1,332 @@
+---
+title: "STAT 293 - Final Project"
+author: "Nancy Lopez"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+library(mice)
+library(dplyr)
+library(naniar)
+library(survival)
+library(lme4)
+```
+
+
+```{r}
+load("/Users/nancylopez/Downloads/heart.rdata")
+```
+
+# MISSING DATA
+
+```{r}
+missing_table <- data.frame(
+  variables = names(heart_data),
+  n_missing = colSums(is.na(heart_data)),
+  percentage_missing = colMeans(is.na(heart_data)) * 100
+)
+
+missing_table[order(-missing_table$percentage_missing), ]
+
+```
+
+
+```{r}
+missing_data <- heart_data[c("log.grad", "grad", "ef", "lvmi")]
+md.pattern(missing_data)
+
+```
+
+
+```{r}
+miss_data <- heart_data
+miss_data$lvmi_miss <- is.na(heart_data$lvmi)
+with(miss_data, table(status, lvmi_miss))
+prop.table(with(miss_data, table(status, lvmi_miss)), 1)
+```
+
+For alive patients, 16.1 percent of the lmvi observations are missing
+For dead patients, 20.5 percent of the lmvi observations are dead
+
+```{r}
+miss_data$ef_miss <- is.na(heart_data$ef)
+with(miss_data, table(status, ef_miss))
+prop.table(with(miss_data, table(status, ef_miss)),1)
+```
+
+not much of a diff between dead patients and lost at follow up, so we lean more towards MAR than MNAR 
+
+```{r}
+miss_data$grad_miss <- is.na(heart_data$grad)
+with(miss_data, table(status, grad_miss))
+prop.table(with(miss_data, table(status, grad_miss)), 1)
+```
+
+most missing observations are alive, since we have like a 8% advantage from the live portion, we are more likely to assume MAR
+
+## MCAR Test 
+
+```{r}
+mcar_test(heart_data)
+
+# p > 0.05 == MCAR
+# P < 0.05 == not MCAR 
+
+# actual p: 3.595806e-05	
+```
+
+so now we know fs its prob not MCAR
+
+"Little's missing completely at random (MCAR) test" 
+
+## Visits 
+
+```{r}
+# number of patients
+n_patients <- length(unique(heart_data$num))
+
+# total observations
+n_obs <- nrow(heart_data)
+
+# visits per patient
+visits_summary <- heart_data %>%
+  group_by(num) %>%
+  summarise(n_visits = n()) %>%
+  summary()
+
+visits_per_patient <- heart_data %>%
+  group_by(num) %>%
+  summarise(n_visits = n())
+
+n_patients
+n_obs
+visits_summary
+```
+
+```{r}
+visits_per_patient
+table(visits_per_patient$n_visits)
+```
+
+```{r}
+
+data_mi <- heart_data
+
+
+# run multiple imputation
+imp <- mice(
+  data_mi,
+  m = 20,
+  seed = 293
+)
+
+summary(imp)
+```
+
+
+# EDA
+
+## Baselline table
+
+```{r}
+# pick baseline vars (edit if you want)
+key_vars <- heart_data %>%
+  select(sex, age, time, fuyrs, status, grad, log.lvmi, ef, lvh, prenyha, redo, size, con.cabg, creat, dm, acei, lv, emergenc, hc, sten.reg.mix, hs)
+
+baseline_summary <- key_vars %>%
+  group_by(hs) %>%
+  summarise(across(everything(),
+                   list(mean = ~mean(. , na.rm = TRUE),
+                        sd = ~sd(. , na.rm = TRUE))))
+
+baseline_summary
+```
+
+## Boxplots of selected baselines covariates by survival status 
+
+```{r}
+ggplot(heart_data, aes(x = factor(status), y = sex)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Sex")
+
+ggplot(heart_data, aes(x = factor(status), y = age)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Age")
+
+ggplot(heart_data, aes(x = factor(status), y = grad)) +
+  geom_boxplot() + 
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Valve gradient at follow-up")
+
+ggplot(subset(heart_data, grad < 30), 
+       aes(x = factor(status), y = grad)) +
+  geom_boxplot() + 
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Valve gradient at follow-up")
+
+ggplot(heart_data, aes(x = factor(status), y = lvmi)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Left ventricular mass index")
+
+ggplot(subset(heart_data, lvmi < 300), aes(x = factor(status), y = lvmi)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Left ventricular mass index")
+
+ggplot(heart_data, aes(x = factor(status), y = ef)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Ejection fraction at follow-up visit")
+
+ggplot(heart_data, aes(x = factor(status), y = bsa)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Preoperative body surface area")
+
+ggplot(heart_data, aes(x = factor(status), y = size)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "size of the valve (millimeters)")
+
+ggplot(heart_data, aes(x = factor(status), y =  creat)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Preoperative serum creatinine")
+
+ggplot(subset(heart_data, creat < 200), aes(x = factor(status), y =  creat)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Preoperative serum creatinine")
+
+ggplot(heart_data, aes(x = factor(status), y =  creat)) +
+  geom_boxplot() +
+  labs(x = "Survival status (0=alive,1=dead)",
+       y = "Preoperative serum creatinine")
+```
+- age 
+- lmvi
+- bsa
+
+## Missingness patterns vs. survival status plot
+
+```{r}
+heart_data$lvmi_miss <- is.na(heart_data$lvmi)
+
+ggplot(heart_data, aes(x = factor(status), fill = factor(lvmi_miss))) +
+  geom_bar(position = "fill") +
+  labs(x ="Survival status (0=alive,1=dead)", fill = "Is data missing?")
+```
+
+## Spaghetti plot of log.lvmi over time
+
+```{r}
+ggplot(heart_data, aes(x = time, y = log.lvmi, group = num)) +
+  geom_line(alpha = 0.2) +
+  labs(x = "Time since surgery (years)",
+       y = "log(LVMI)")
+```
+Individuals in log(LVMI) show substantial heterogeneity, supporting the use of a mixed-effects model for the longitudinal component???
+
+## Kaplan-Meier curves by valve type
+
+```{r}
+# create a survival object
+# fuyrs = follow-up time
+surv_obj <- Surv(heart_data$fuyrs, heart_data$status)
+
+# this estimates a separate survival curve for each valve group
+fit <- survfit(surv_obj ~ hs, data = heart_data)
+
+plot(fit,
+     col = c("blue", "red"),
+     xlab = "Time since surgery (years)",
+     ylab = "Survival probability")
+
+legend("bottomleft",
+       legend = c("Porcine", "Homograft"),
+       col = c("blue", "red"),
+       lty = 1)
+```
+Potential differences in survival between valve types, with the homograft group showing lower survival probabilities over follow-up. This motivates inclusion of valve type in the survival submodel
+
+
+# ANALYSIS DRAFT
+
+```{r}
+lmm_fit <- lmer(
+  log.lvmi ~ time * hs + sex + age + bsa + lvh + prenyha + redo + dm + lv + (time | num),
+  data = heart_data)
+
+summary(lmm_fit)
+```
+
+WHAT I GOT FOR LMM:
+- interaction: 0.005 No evidence that rate of LVMI change differs by valve type
+- time: -0.012 LVMI slighlty decreases over time after surgery 
+- hs: 0.068 Patients with stentless valves have slightly higher LVMI, but not statistically convincing.
+- sex: -0.218 Females have lower LVMI on average
+- age: 0.001 not significant
+- bsa: -0.274 Larger BSA is associated with lower indexed LVMI
+- lvh: -0.114 patients with preoperative LVH have slightly lower postoperative LVMI
+- prenyha: -0.005 not significant
+- redo: -0.007 Patients with prior surgery have slightly higher LVMI, but effect is small
+- dm: -0.191 slightly lower LVMI among diabetes 
+- lv: 0.038 higher lvef means higher lmvi
+
+```{r}
+survival_fit <- coxph(
+  Surv(fuyrs, status) ~ hs +
+    sex + age + bsa + lvh + prenyha +
+    redo + dm + lv,
+  data = heart_data
+)
+
+summary(survival_fit)
+```
+WHAT I GOT FOR SURVIVAL ANALYSIS:
+- hr: 2.02 patients with stentless valves have about 2× hazard of death
+- age: 1.18 each additional year of age means 18% higher hazard 
+- lvh: 0.14 
+- redo 0.494 prior surgery associated with lower observed hazard
+- lv: 2.49 worse LV function means higher mortality risk
+
+
+# ANALYSIS BASED OF ARTICLE WITH JM
+
+```{r}
+#install.packages("nlme")
+library(nlme)
+#install.packages("JM")
+library(JM)
+
+jm_data <- heart_data[!duplicated(heart_data$num), ]
+
+lme_fit <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
+  random = ~ time | num,
+  data = heart_data)
+
+cox_fit <- coxph(
+  Surv(fuyrs, status) ~ hs + sex + age + bsa + lvh + prenyha + redo + dm + lv +
+    cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+
+
+joint_fit <- jointModel(
+  lme_fit,
+  cox_fit,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+
+summary(joint_fit)
+```
+
