@@ -254,6 +254,11 @@ legend("bottomleft",
 ```
 Potential differences in survival between valve types, with the homograft group showing lower survival probabilities over follow-up. This motivates inclusion of valve type in the survival submodel
 
+```{r,warning=FALSE,message=FALSE}
+ggplot(heart_data,
+       aes(time, log.lvmi, color = factor(status))) +
+  geom_smooth(se=FALSE)
+```
 
 # ANALYSIS DRAFT
 
