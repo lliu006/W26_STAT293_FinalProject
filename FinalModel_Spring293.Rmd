@@ -1,0 +1,436 @@
+---
+title: "STAT 293 Final Project Model"
+author: "Nancy Lopez"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# packages 
+
+```{r}
+library(ggplot2)
+library(mice)
+library(dplyr)
+library(naniar)
+library(survival)
+library(lme4)
+library(nlme)
+library(JM)
+```
+
+# data 
+
+```{r}
+load("/Users/nancylopez/Downloads/heart.rdata")
+```
+
+# LMM 
+
+```{r}
+#data <- heart_data %>%
+#  filter(time < fuyrs)
+
+# confounders are PRE TREATMENT (operation) covariates that impact both exposure and outcome 
+# fuyrs starts POST treatment
+# status is POST treatment 
+# grad/log.grad is POST treatment
+# ef is POST treatment 
+# size is a MEDIATOR, not confounder
+# con.cabg is not a confounder given the literature 
+# creat was giving me issues 
+
+lme_full <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + dm + lv + acei + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data)
+
+```
+
+# survival 
+
+```{r}
+jm_data <- heart_data[!duplicated(heart_data$num), ]
+
+cox_full <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+
+summary(cox_full)
+```
+
+# joint 
+
+```{r}
+joint_full <- jointModel(
+  lme_full,
+  cox_full,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+
+summary(joint_full)
+```
+
+# change in estimate rule 
+
+```{r}
+alpha_full <- joint_full$coefficients$alpha
+alpha_full
+```
+
+
+## sex 
+
+```{r}
+lme_no_sex <- lme(
+  log.lvmi ~ time + hs + age + bsa + lvh + 
+    prenyha + redo + dm + lv + acei + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_sex <- coxph(
+  Surv(fuyrs, status) ~ age + bsa + lvh + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_sex <- jointModel(lme_no_sex, cox_no_sex, timeVar = "time")
+
+alpha_no_sex <- jm_no_sex$coefficients$alpha
+alpha_no_sex
+
+percent_change <- abs(alpha_no_sex - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## age 
+
+```{r}
+lme_no_age <- lme(
+  log.lvmi ~ time + hs + sex  + bsa + lvh + 
+    prenyha + redo + dm + lv + acei + sten.reg.mix + hs,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_age <- coxph(
+  Surv(fuyrs, status) ~ sex + bsa + lvh + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_age <- jointModel(lme_no_age, cox_no_age, timeVar = "time")
+
+alpha_no_age <- jm_no_age$coefficients$alpha
+
+percent_change <- abs(alpha_no_age - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## bsa 
+
+```{r}
+lme_no_bsa <- lme(
+  log.lvmi ~ time + hs + sex + age  + lvh + 
+    prenyha + redo + dm + lv + acei + sten.reg.mix + hs,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_bsa <- coxph(
+  Surv(fuyrs, status) ~ sex + age + lvh + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_bsa <- jointModel(lme_no_bsa, cox_no_bsa, timeVar = "time")
+
+alpha_no_bsa <- jm_no_bsa$coefficients$alpha
+
+percent_change <- abs(alpha_no_bsa - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## lvh 
+
+```{r}
+lme_no_lvh <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + 
+    prenyha + redo + dm + lv + acei + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_lvh <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_lvh <- jointModel(lme_no_lvh, cox_no_lvh, timeVar = "time")
+
+alpha_no_lvh <- jm_no_lvh$coefficients$alpha
+
+percent_change <- abs(alpha_no_lvh - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## prenyha
+
+```{r}
+lme_no_prenyha <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + redo + dm + lv + acei + sten.reg.mix + hs,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_prenyha <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + 
+    redo + dm + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_prenyha <- jointModel(lme_no_prenyha, cox_no_prenyha, timeVar = "time")
+
+alpha_no_prenyha <- jm_no_prenyha$coefficients$alpha
+
+percent_change <- abs(alpha_no_prenyha - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+
+## redo 
+
+```{r}
+lme_no_redo <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + dm + lv + acei + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_redo <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + dm + lv + acei + 
+    sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_redo <- jointModel(lme_no_redo, cox_no_redo, timeVar = "time")
+
+alpha_no_redo <- jm_no_redo$coefficients$alpha
+
+percent_change <- abs(alpha_no_redo - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## dm 
+
+```{r}
+lme_no_dm <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + lv + acei + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_dm <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + lv + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_dm <- jointModel(lme_no_dm, cox_no_dm, timeVar = "time")
+
+alpha_no_dm <- jm_no_dm$coefficients$alpha
+
+percent_change <- abs(alpha_no_dm - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## lv
+
+```{r}
+lme_no_lv <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + dm + acei + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_lv <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + dm + acei + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_lv <- jointModel(lme_no_lv, cox_no_lv, timeVar = "time")
+
+alpha_no_lv <- jm_no_lv$coefficients$alpha
+
+percent_change <- abs(alpha_no_lv - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## acei 
+
+```{r}
+lme_no_acei <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + dm + lv  + hs + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_acei <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + dm + lv + sten.reg.mix + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_acei <- jointModel(lme_no_acei, cox_no_acei, timeVar = "time")
+
+alpha_no_acei <- jm_no_acei$coefficients$alpha
+
+percent_change <- abs(alpha_no_acei - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## sten.reg.mix
+
+
+```{r}
+lme_no_sten.reg.mix <- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + dm + lv  + acei + hs,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_sten.reg.mix <- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + dm + lv + acei + hs + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_sten.reg.mix <- jointModel(lme_no_sten.reg.mix, cox_no_sten.reg.mix, timeVar = "time")
+
+alpha_no_sten.reg.mix <- jm_no_sten.reg.mix$coefficients$alpha
+
+percent_change <- abs(alpha_no_sten.reg.mix - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+## hs 
+
+
+```{r}
+lme_no_hs<- lme(
+  log.lvmi ~ time + hs + sex + age + bsa + lvh + 
+    prenyha + redo + dm + lv  + acei + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data
+)
+
+cox_no_hs<- coxph(
+  Surv(fuyrs, status) ~ sex + age + bsa + lvh + prenyha + 
+    redo + dm + lv + acei + sten.reg.mix + cluster(num),
+  data = jm_data,
+  x = TRUE
+)
+
+jm_no_hs <- jointModel(lme_no_hs, cox_no_hs, timeVar = "time")
+
+alpha_no_hs <- jm_no_hs$coefficients$alpha
+
+percent_change <- abs(alpha_no_hs - alpha_full) / abs(alpha_full) * 100
+if (percent_change > 5) {
+  print("KEEP — confounder")
+} else {
+  print("DROP— not confounding")
+}
+```
+
+# simple model 
+
+```{r}
+lme_small <- lme(
+  fixed = log.lvmi ~ time + age + dm + sex + lv + sten.reg.mix,
+  random = ~ time | num,
+  data = heart_data)
+
+jm_data <- heart_data[!duplicated(heart_data$num), ]
+
+cox_small <- coxph(
+  Surv(fuyrs, status) ~ age + dm + sex + lv + sten.reg.mix + cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+
+joint_small <- jointModel(
+  lme_small,
+  cox_small,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+
+summary(joint_small)
+summary(joint_full)
+```
+
