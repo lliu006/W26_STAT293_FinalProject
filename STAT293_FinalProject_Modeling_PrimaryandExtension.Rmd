@@ -1,0 +1,220 @@
+---
+title: "STAT 293 - Final Project"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+library(naniar)
+library(survival)
+library(lme4)
+library(dplyr)
+```
+
+
+```{r}
+heart_data <- read.csv(file.choose())
+```
+
+# ANALYSIS DRAFT
+
+```{r}
+lmm_fit <- lmer(
+  log.lvmi ~ time * hs + sex + age + bsa + lvh + prenyha + redo + dm + lv + (time | num),
+  data = heart_data)
+
+summary(lmm_fit)
+```
+
+WHAT I GOT FOR LMM:
+- interaction: 0.005 No evidence that rate of LVMI change differs by valve type
+- time: -0.012 LVMI slighlty decreases over time after surgery 
+- hs: 0.068 Patients with stentless valves have slightly higher LVMI, but not statistically convincing.
+- sex: -0.218 Females have lower LVMI on average
+- age: 0.001 not significant
+- bsa: -0.274 Larger BSA is associated with lower indexed LVMI
+- lvh: -0.114 patients with preoperative LVH have slightly lower postoperative LVMI
+- prenyha: -0.005 not significant
+- redo: -0.007 Patients with prior surgery have slightly higher LVMI, but effect is small
+- dm: -0.191 slightly lower LVMI among diabetes 
+- lv: 0.038 higher lvef means higher lmvi
+
+```{r}
+survival_fit <- coxph(
+  Surv(fuyrs, status) ~ hs +
+    sex + age + bsa + lvh + prenyha +
+    redo + dm + lv,
+  data = heart_data
+)
+
+summary(survival_fit)
+```
+
+WHAT I GOT FOR SURVIVAL ANALYSIS:
+- hr: 2.02 patients with stentless valves have about 2× hazard of death
+- age: 1.18 each additional year of age means 18% higher hazard 
+- lvh: 0.14 
+- redo 0.494 prior surgery associated with lower observed hazard
+- lv: 2.49 worse LV function means higher mortality risk
+
+
+# ANALYSIS BASED OF ARTICLE WITH JM
+
+```{r}
+#install.packages("nlme")
+library(nlme)
+#install.packages("JM")
+library(JM)
+
+jm_data <- heart_data[!duplicated(heart_data$num), ]
+
+lme_fit <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
+  random = ~ time | num,
+  data = heart_data)
+
+cox_fit <- coxph(
+  Surv(fuyrs, status) ~ hs + sex + age + bsa + lvh + prenyha + redo + dm + lv +
+    cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+
+
+joint_fit <- jointModel(
+  lme_fit,
+  cox_fit,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+
+summary(joint_fit)
+```
+
+# slope parameterization
+
+```{r}
+#reload the full dataset
+heart_data <- read.csv(file.choose())
+
+# sort long data 
+heart_sorted <- heart_data %>%
+  arrange(num, time)
+
+# build subject-level survival data from earliest row per subject
+jm_data <- heart_sorted %>%
+  distinct(num, .keep_all = TRUE) %>% # earliest time after sorting
+  mutate(status = as.integer(status)) %>%
+  filter(!is.na(fuyrs),
+         fuyrs > 0,
+         !is.na(status))
+
+# longitudinal data for JM: drop subject-level survival columns to avoid .x/.y 
+heart_long <- heart_sorted %>%
+  dplyr::select(-any_of(c("fuyrs", "status"))) %>% # remove if exist in long file
+  distinct(num, time, .keep_all = TRUE) # remove duplicate times
+
+# enforce measurement times within follow-up 
+heart_jm <- heart_long %>%
+  inner_join(jm_data %>% dplyr::select(num, fuyrs),
+             by = "num") %>%
+  filter(time <= fuyrs) %>% # strict to avoid stop = start
+  dplyr::select(-fuyrs)
+
+# restrict to obs that complete data for both models
+lmm_vars <- c("num", "time", "log.lvmi", "hs", "sex", "age", "bsa", "lvh", 
+              "prenyha", "redo", "dm", "lv")
+ids_lmm <- heart_jm %>%
+  dplyr::select(all_of(lmm_vars)) %>%
+  tidyr::drop_na() %>%
+  distinct(num) %>%
+  pull(num)
+
+cox_vars <- c("num", "fuyrs", "status",  "hs", "sex", "age",   "bsa", "lvh",
+              "prenyha", "redo", "dm", "lv")
+ids_cox <- jm_data %>%
+  dplyr::select(all_of(cox_vars)) %>%
+  tidyr::drop_na() %>%
+  distinct(num) %>%
+  pull(num)
+
+keep_ids <- intersect(ids_lmm, ids_cox)
+heart_jm2 <- heart_jm %>% filter(num %in% keep_ids)
+jm_data2 <- jm_data %>% filter(num %in% keep_ids)
+
+# refit models on cleaned datasets
+lme_fit <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
+  random = ~ time | num,
+  data = heart_jm2,
+  na.action = na.exclude
+)
+
+cox_fit <- coxph(
+  Surv(fuyrs, status) ~ hs + sex + age + bsa + lvh + prenyha + redo + dm + lv + cluster(num),
+  data  = jm_data2,
+  x = TRUE,
+  model = TRUE
+)
+
+# JM using slope parameterization
+joint_fit_slope <- jointModel(
+  lmeObject = lme_fit,
+  survObject = cox_fit,
+  timeVar = "time",
+  parameterization = "slope",
+  method = "piecewise-PH-aGH",
+  derivForm = list(
+    fixed = ~ 1,
+    indFixed = 2,   # "time" in fixef(lme_fit)
+    random = ~ 1,
+    indRandom = 2    # "time" random slope
+  )
+)
+summary(joint_fit_slope)
+```
+
+What was done:
+
+Data were cleaned to satisfy JM assumptions, including removal of duplicate
+time points within subjects and exclusion of measurements occurring after the
+event or censoring time. Because JM requires the same subjects in both the
+longitudinal and survival components, we restricted the analysis to individuals
+with complete covariate information. These steps ensured consistent risk-set
+construction and stable estimation of the slope parameterization.
+
+Moreover, the slope parameterization requires alignment of the derivative of
+the longitudinal trajectory with the survival risk process. To avoid
+zero-length intervals and dimension mismatch between the submodels, we enforced
+strictly increasing measurement times within subjects and ensured identical
+subject sets across the LME and Cox components. This alignment is necessary for
+valid joint likelihood construction.
+
+Interpretation of results:
+
+In the JM with slope parameterization, the longitudinal submodel indicated that
+LVMI declined modestly but significantly over time following surgery
+($\beta$_time = -0.010, p = 0.044), with substantial between-patient
+variability in baseline levels and slopes. In the survival submodel, older age
+(p < 0.0001) and poorer preoperative ejection fraction (p = 0.0007) were
+significantly associated with increased mortality risk. However, the
+association parameter linking the instantaneous rate of change in LVMI to
+mortality was not statistically significant ($\alpha$ = -6.23, p = 0.376),
+suggesting that the rate of LVMI change does not independently predict
+time-to-death in this cohort.
+
+# comparison and conclusion
+
+In the JM with value parameterization, the association parameter linking the
+current level of LVMI to mortality was statistically significant ($\alpha$ =
+1.28, p = 0.028). This indicates that higher LVMI levels are associated with
+increased risk of death. Specifically, a one-unit increase in log(LVMI)
+corresponds to an approximately 3.6-fold increase in hazard.
+
+In contrast, the slope parameterization did not demonstrate a significant
+association between the rate of LVMI change and mortality (p = 0.376). Model
+comparison favored the value parameterization (AIC = 632.25 vs. 634.62),
+suggesting that current LVMI level, rather than its rate of change, is more
+strongly associated with time-to-death following aortic valve replacement.
