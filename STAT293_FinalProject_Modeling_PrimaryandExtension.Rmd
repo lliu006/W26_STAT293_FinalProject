@@ -218,3 +218,12 @@ association between the rate of LVMI change and mortality (p = 0.376). Model
 comparison favored the value parameterization (AIC = 632.25 vs. 634.62),
 suggesting that current LVMI level, rather than its rate of change, is more
 strongly associated with time-to-death following aortic valve replacement.
+
+Although exploratory plots did not demonstrate a clear visual separation in
+trajectory slopes between survival groups, dynamic ventricular remodeling
+remains biologically plausible as a prognostic factor. Therefore, we
+evaluated a slope-parameterized joint model to formally assess whether the
+rate of LVMI change provided additional prognostic information beyond current
+LVMI level. The slope association parameter was not statistically significant,
+suggesting that LVMI level rather than its rate of change drives mortality
+risk in this cohort.
