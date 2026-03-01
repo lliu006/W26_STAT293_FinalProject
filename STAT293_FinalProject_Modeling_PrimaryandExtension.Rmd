@@ -4,12 +4,14 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 library(ggplot2)
 library(naniar)
 library(survival)
-library(lme4)
+library(nlme)
 library(dplyr)
+library(MASS)
+library(JM)
 ```
 
 
@@ -20,11 +22,33 @@ heart_data <- read.csv(file.choose())
 # ANALYSIS DRAFT
 
 ```{r}
-lmm_fit <- lmer(
-  log.lvmi ~ time * hs + sex + age + bsa + lvh + prenyha + redo + dm + lv + (time | num),
-  data = heart_data)
+heart_data$hs <- relevel(factor(heart_data$hs),
+                         ref = "Stentless valve")
 
-summary(lmm_fit)
+heart_data <- heart_data %>%
+  mutate(num = factor(num),
+         sex = factor(sex,
+                      levels = c(0,1),
+                      labels = c("Male", "Female")),
+         prenyha = factor(prenyha),
+         redo = factor(redo),
+         dm = factor(dm),
+         acei = factor(acei),
+         con.cabg = factor(con.cabg),
+         lv = factor(lv),
+         emergenc = factor(emergenc),
+         hc = factor(hc),
+         sten.reg.mix = factor(sten.reg.mix)
+         )
+```
+
+```{r}
+lmm0 <- lme(
+  fixed = log.lvmi ~ time * hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
+  random = ~ time | num,
+  data = heart_data
+  )
+summary(lmm0)
 ```
 
 WHAT I GOT FOR LMM:
@@ -47,7 +71,6 @@ survival_fit <- coxph(
     redo + dm + lv,
   data = heart_data
 )
-
 summary(survival_fit)
 ```
 
@@ -58,23 +81,17 @@ WHAT I GOT FOR SURVIVAL ANALYSIS:
 - redo 0.494 prior surgery associated with lower observed hazard
 - lv: 2.49 worse LV function means higher mortality risk
 
-
-# ANALYSIS BASED OF ARTICLE WITH JM
+# cox full
 
 ```{r}
-#install.packages("nlme")
-library(nlme)
-#install.packages("JM")
-library(JM)
-
 jm_data <- heart_data[!duplicated(heart_data$num), ]
 
-lme_fit <- lme(
+lme_full <- lme(
   fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
   random = ~ time | num,
   data = heart_data)
 
-cox_fit <- coxph(
+cox_full <- coxph(
   Surv(fuyrs, status) ~ hs + sex + age + bsa + lvh + prenyha + redo + dm + lv +
     cluster(num),
   data = jm_data,
@@ -82,16 +99,89 @@ cox_fit <- coxph(
   model = TRUE
 )
 
-
-joint_fit <- jointModel(
-  lme_fit,
-  cox_fit,
+joint_fit<- jointModel(
+  lme_full,
+  cox_full,
   timeVar = "time",
   method = "piecewise-PH-aGH"
 )
-
 summary(joint_fit)
 ```
+
+higher subject-specific lvmi is associated with increased hazard of death
+
+LMM not sig: time, hs, age, prenyha, and redo
+
+# select LMM covaraites and cox stepwise
+
+```{r}
+lme2 <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + dm + lv,
+  random = ~ time | num,
+  data = heart_data)
+summary(lme2)
+
+cox_step <- stepAIC(cox_full, direction = "backward")
+summary(cox_step)
+
+cox2 <- coxph(Surv(fuyrs, status) ~ age + lv + cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+summary(cox2)
+
+joint_fit2<- jointModel(
+  lme2,
+  cox2,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+summary(joint_fit2)
+
+AIC(joint_fit, joint_fit2)
+```
+
+model fit improved
+
+age being non-significant in LMM is not problematic since it matters in survival
+
+after adjusting survival model more, lmvi-hazard association weakens and becomes borderline -> some of the previous survival covariates were partially absorbing
+variation
+
+# select covariates for cox
+
+```{r}
+# drop lv2 bc non-sign
+cox3 <- coxph(
+  Surv(fuyrs, status) ~ age + I(lv == 3) + cluster(num),
+  data = jm_data,
+  x = TRUE,
+  model = TRUE
+)
+
+joint_fit3 <- jointModel(
+  lme2,
+  cox3,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+summary(joint_fit3)
+
+AIC(joint_fit2, joint_fit3)
+```
+
+After simplifying the survival submodel to include only age and LV = 3, JM 
+achieved a lower AIC and comparable overall fit. Age remained a strong
+independent predictor of mortality (p < 0.0001), and severe LV dysfunction was
+also significantly associated with increased hazard (p = 0.0035). In LMM, 
+female sex, body surface area, and diabetes were significantly associated with
+LVMI levels. Importantly, the association parameter linking the current value
+of LVMI to mortality remained positive and borderline statistically significant
+($\alpha$ = 1.06, p = 0.051), indicating that higher LVMI is associated with
+increased mortality risk after adjusting for age and LV function. Overall, the
+simplified model is more clinically interpretable and provides stable estimates
+of the longitudinal-survival association.
 
 # slope parameterization
 
@@ -111,7 +201,7 @@ jm_data <- heart_sorted %>%
          fuyrs > 0,
          !is.na(status))
 
-# longitudinal data for JM: drop subject-level survival columns to avoid .x/.y 
+# longitudinal data for JM: drop subject-level survival columns to avoid duplicates
 heart_long <- heart_sorted %>%
   dplyr::select(-any_of(c("fuyrs", "status"))) %>% # remove if exist in long file
   distinct(num, time, .keep_all = TRUE) # remove duplicate times
@@ -125,15 +215,14 @@ heart_jm <- heart_long %>%
 
 # restrict to obs that complete data for both models
 lmm_vars <- c("num", "time", "log.lvmi", "hs", "sex", "age", "bsa", "lvh", 
-              "prenyha", "redo", "dm", "lv")
+              "dm", "lv")
 ids_lmm <- heart_jm %>%
   dplyr::select(all_of(lmm_vars)) %>%
   tidyr::drop_na() %>%
   distinct(num) %>%
   pull(num)
 
-cox_vars <- c("num", "fuyrs", "status",  "hs", "sex", "age",   "bsa", "lvh",
-              "prenyha", "redo", "dm", "lv")
+cox_vars <- c("num", "fuyrs", "status", "age", "lv")
 ids_cox <- jm_data %>%
   dplyr::select(all_of(cox_vars)) %>%
   tidyr::drop_na() %>%
@@ -145,15 +234,14 @@ heart_jm2 <- heart_jm %>% filter(num %in% keep_ids)
 jm_data2 <- jm_data %>% filter(num %in% keep_ids)
 
 # refit models on cleaned datasets
-lme_fit <- lme(
-  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + prenyha + redo + dm + lv,
+lme3 <- lme(
+  fixed = log.lvmi ~ time + hs + sex + age + bsa + lvh + dm + lv,
   random = ~ time | num,
-  data = heart_jm2,
-  na.action = na.exclude
+  data = heart_jm2
 )
 
-cox_fit <- coxph(
-  Surv(fuyrs, status) ~ hs + sex + age + bsa + lvh + prenyha + redo + dm + lv + cluster(num),
+cox4 <- coxph(
+  Surv(fuyrs, status) ~ age + I(lv == 3) + cluster(num),
   data  = jm_data2,
   x = TRUE,
   model = TRUE
@@ -161,19 +249,21 @@ cox_fit <- coxph(
 
 # JM using slope parameterization
 joint_fit_slope <- jointModel(
-  lmeObject = lme_fit,
-  survObject = cox_fit,
+  lmeObject = lme3,
+  survObject = cox4,
   timeVar = "time",
   parameterization = "slope",
   method = "piecewise-PH-aGH",
   derivForm = list(
-    fixed = ~ 1,
-    indFixed = 2,   # "time" in fixef(lme_fit)
-    random = ~ 1,
-    indRandom = 2    # "time" random slope
+    fixed = ~ 1, # derivative of fixed part wrt time = intercept column
+    indFixed = 2, # index of time in fixef(lme_fit) 
+    random = ~ 1, # derivative of random part wrt time
+    indRandom = 2 # index of time in the random effects
   )
 )
 summary(joint_fit_slope)
+
+AIC(joint_fit3, joint_fit_slope)
 ```
 
 What was done:
@@ -192,38 +282,21 @@ strictly increasing measurement times within subjects and ensured identical
 subject sets across the LME and Cox components. This alignment is necessary for
 valid joint likelihood construction.
 
-Interpretation of results:
+Slope parameterization model interpretation:
 
-In the JM with slope parameterization, the longitudinal submodel indicated that
-LVMI declined modestly but significantly over time following surgery
-($\beta$_time = -0.010, p = 0.044), with substantial between-patient
-variability in baseline levels and slopes. In the survival submodel, older age
-(p < 0.0001) and poorer preoperative ejection fraction (p = 0.0007) were
-significantly associated with increased mortality risk. However, the
-association parameter linking the instantaneous rate of change in LVMI to
-mortality was not statistically significant ($\alpha$ = -6.23, p = 0.376),
-suggesting that the rate of LVMI change does not independently predict
-time-to-death in this cohort.
+We extended the JM by incorporating a slope parameterization to assess whether
+the instantaneous rate of change in LVMI was associated with mortality risk.
+Compared to the current-value model, the slope model did not improve overall
+fit (AIC = 621.7 vs. 620.6 for the value model). The slope association
+parameter was not statistically significant (p = 0.32), indicating that the
+rate of change in LVMI was not independently associated with mortality after
+adjusting for age and severe LV dysfunction. In contrast, age and severe LV
+dysfunction remained strong predictors of mortality. 
 
-# comparison and conclusion
+# conclusion 
 
-In the JM with value parameterization, the association parameter linking the
-current level of LVMI to mortality was statistically significant ($\alpha$ =
-1.28, p = 0.028). This indicates that higher LVMI levels are associated with
-increased risk of death. Specifically, a one-unit increase in log(LVMI)
-corresponds to an approximately 3.6-fold increase in hazard.
-
-In contrast, the slope parameterization did not demonstrate a significant
-association between the rate of LVMI change and mortality (p = 0.376). Model
-comparison favored the value parameterization (AIC = 632.25 vs. 634.62),
-suggesting that current LVMI level, rather than its rate of change, is more
-strongly associated with time-to-death following aortic valve replacement.
-
-Although exploratory plots did not demonstrate a clear visual separation in
-trajectory slopes between survival groups, dynamic ventricular remodeling
-remains biologically plausible as a prognostic factor. Therefore, we
-evaluated a slope-parameterized joint model to formally assess whether the
-rate of LVMI change provided additional prognostic information beyond current
-LVMI level. The slope association parameter was not statistically significant,
-suggesting that LVMI level rather than its rate of change drives mortality
-risk in this cohort.
+Extending the joint model to include the instantaneous slope of LVMI did not
+improve model fit (change in AIC $\approx$ 1.2), and the slope association
+parameter was not statistically significant (p = 0.32). These findings suggest
+that mortality risk is more closely related to the current level of LVMI rather
+than its short-term rate of change.
