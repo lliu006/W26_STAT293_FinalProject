@@ -300,3 +300,89 @@ improve model fit (change in AIC $\approx$ 1.2), and the slope association
 parameter was not statistically significant (p = 0.32). These findings suggest
 that mortality risk is more closely related to the current level of LVMI rather
 than its short-term rate of change.
+
+# sensitivity analysis
+
+```{r}
+# add a couple baseline covariates to cox to see if the lvmi assoication chagnes
+cox_sens <- coxph(
+  Surv(fuyrs, status) ~ age + I(lv == 3) + sex + hs + cluster(num),
+  data = jm_data2,
+  x = TRUE,
+  model = TRUE
+)
+
+joint_sens1 <- jointModel(
+  lmeObject = lme3,
+  survObject = cox_sens,
+  timeVar = "time",
+  method = "piecewise-PH-aGH"
+)
+summary(joint_sens1)   
+
+AIC(joint_fit3, joint_sens1)
+```
+
+expanded the survival submodel to additionally adjust for sex and valve type
+
+these covariates were not significantly associated with mortality, and overall
+model fit did not improve (AIC = 624.3 vs. 620.6 in the primary model)
+
+the association between current LVMI and mortality remained positive and
+statistically significant ($\alpha$ = 1.16, p = 0.041), indicating that the
+primary findings are robust to moderate adjustment of the survival model
+
+```{r}
+# use value + slope for parameterization to test whether adding slope on top of
+# value improves fit
+joint_sens2 <- jointModel(
+  lmeObject = lme3,
+  survObject = cox4,
+  timeVar = "time",
+  method = "piecewise-PH-aGH",
+  parameterization = "both",
+  derivForm = list(
+    fixed = ~ 1, # derivative of fixed part wrt time = intercept column
+    indFixed = 2, # index of time in fixef(lme_fit) 
+    random = ~ 1, # derivative of random part wrt time
+    indRandom = 2 # index of time in the random effects
+  )
+)
+summary(joint_sens2)  
+
+AIC(joint_fit3, joint_sens2) 
+```
+
+further evaluated a JM including both the current value and slope of LVMI
+
+model fit was nearly identical to the value-only model (AIC = 620.3 vs. 620.6),
+indicating no meaningful improvement from adding slope
+
+in this specification, the current value of LVMI remained positively and
+significantly associated with mortality ($\alpha$ = 1.25, p = 0.021), while the
+slope effect was not statistically significant (p = 0.28)
+
+these findings suggest that mortality risk is primarily related to the level of
+LVMI rather than its short-term rate of change, and confirm the robustness of
+our main conclusions
+
+```{r}
+# PH assumption check for survival covariates
+ph_test <- cox.zph(cox4)
+print(ph_test)
+
+# each covariate should be approximately flat
+plot(ph_test)
+```
+
+assessed the proportional hazards (PH) assumption using Schoenfeld residual
+tests and graphical diagnostics
+
+no statistical evidence of violation for age (p = 0.20) or severe LV
+dysfunction (p = 0.90), and the global test was also non-significant (p = 0.43)
+
+vsual inspection of the scaled Schoenfeld residual plots showed approximately
+horizontal trends over time
+
+these results indicate that the PH assumption is reasonable for the survival
+submodel used in JM/joint analysis
