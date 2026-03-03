@@ -1,9 +1,3 @@
----
-title: "STAT 293 - Final Project"
-date: "`r Sys.Date()`"
-output: pdf_document
----
-
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(mice)
@@ -299,4 +293,5 @@ ggplot(plot_data,
 
 The Died group has a visibly higher median. The distribution is shifted upward.
 There is overlap, but the central tendency differs. Patients who died tended to
+
 have higher LVMI values overall.
