@@ -82,8 +82,12 @@ We evaluated additional baseline covariates in the survival model, alternative a
 
 ## Repository Structure
 
+This is the actual foldr and file layout used in this project:
+
+```text
 ├── README.md                                 # Project description and workflow
 │
+├── heart.csv                                 # Dataset used in the project
 ├── 01_DataSimulation.R                       # All helper functions, singl-run simullation, and GIMME wrapper
 ├── 11_Method.Rmd                             # Runs all simulations and writes combine results
 ├── 21_Example_and_Analysis.Rmd               # Loads results and creates final summary tables and plots
@@ -104,6 +108,7 @@ We evaluated additional baseline covariates in the survival model, alternative a
 ├── STAT_293_Final_Project_Presentation.zip    # Prensetation source files
 ├── STAT_293_Final_Project_Report.pdf          # Compiled report PDF 
 └── STAT_293_Final_Project_Report.tex          # Report source file        
+```
 
 ## Software
 
