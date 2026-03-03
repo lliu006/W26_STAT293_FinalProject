@@ -163,7 +163,7 @@ R packages include:
 
 ## Acknowledgements
 
-- Dr. Esra  for course instruction
+- Dr. Esra Kürüm for course instruction
 - Lim et al. for foundational work
 - The developers of `JM`, `nlme`, and `survival`
 
