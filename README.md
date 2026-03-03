@@ -101,15 +101,29 @@ This is the actual foldr and file layout used in this project:
 
 ## Running the Project
 
-R packages include:
+Required R packages include `dplyr`, `ggplot2`, `JM`, `MASS`, `naniar`, `nlme`, and `survival`.
 
-- `dplyr`
-- `ggplot2`
-- `JM`
-- `MASS`
-- `naniar`
-- `nlme`
-- `survival`
+### Exploratory data analysis (EDA)
+
+```{r}
+knit("EDA.Rmd")
+```
+
+This file:
+
+- loads the dataset, and
+- runs all primary data analysis before the model building.
+
+### Modeling
+
+```{r}
+knit("Primary_and_Extension_Modeling.Rmd")
+```
+
+This file:
+
+- loads the dataset, and
+- runs the primary and extension model building process, as well as sensitivity analysis.
 
 ## Citations
 
