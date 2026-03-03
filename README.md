@@ -117,17 +117,47 @@ R packages include:
 - `nlme`
 - `survival`
 
-## References
+## Citations
 
 ```bibtex
+@article{hickey2016group,
+  title={Joint modelling of time-to-event and multivariate longitudinal outcomes: recent developments and issues},
+  author={Hickey, Graeme L and Philipson, Pete and Jorgensen, Andrea and Kolamunnage-Dona, Ruwanthi},
+  journal={BMC Medical Research Methodology},
+  volume={16},
+  number={1},
+  pages={117},
+  year={2016}
+}
+
+@article{li2023group,
+  title={Acomparisonof twoapproaches to dynamicprediction: joint modeling and landmark modeling},
+  author={Li, Wenhao and Li, Liang and Astor, Brad C},
+  journal={Statistics in Medicine},
+  volume={42},
+  number={13},
+  pages={2101--2115},
+  year={2023}
+}
+
 @article{lim2008group,
   title={Longitudinal study of the profile and predictors of left ventricular mass regression after stentless aortic valve replacement},
   author={Lim, Eric and Ali, Ayyaz and Theodorou, Panagiotis and Sousa, Ines and Ashrafian, Hutan and Chamageorgakis, Themis and Duncan, Alison and Henein, Michael and Diggle, Peter and Pepper, John},
-  journal={NeuroImage},
-  volume={63},
+  journal={The Annals of Thoracic Surgery},
+  volume={85},
+  number={6},
+  pages={2026--2029},
+  year={2008}
+}
+
+@article{parr2022group,
+  title={Joint models for dynamic prediction in localised prostate cancer: a literature review},
+  author={Parr, Harry and Hall, Emma and Porta, Nuria},
+  journal={BMC Medical Research Methodology},
+  volume={22},
   number={1},
-  pages={310--319},
-  year={2012}
+  pages={245},
+  year={2022}
 }
 ```
 
