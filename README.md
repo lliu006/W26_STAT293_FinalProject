@@ -1,4 +1,4 @@
-# Joint Longitudinal-Survival Analysis of Left Ventricular Mass Index After Aortic Valve Replacement
+# Joint Longitudinal-Survival Analysis of Postoperative Left Ventricular Mass Index (LVMI) and Mortality After Aortic Valve Replacement 
 
 ## Winter 2026
 ## Instructor: Dr. Esra Kürüm
@@ -10,8 +10,46 @@
 
 ## Overview
 
-This project analyzes the postoperative trajectories of the left ventricular mass index (LVMI) and their association with time to death following aortic valuve replacement. Using an observational dataset with repeated measurements, we apply joint longitudinal-survival modeling to account for within-subject correlation and inform potential dropout due to the risk of mortality.
+This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valuve replacement. 
 
+Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess wether:
+
+- the current level of LVMI is associated with the risk of mortality, and
+- the slope/rate of change of LVMI provides additional prognostic information.
+
+This work extends classical linear mixed-effects model (LMM) and Cox proportional hazards (PH) model into a unified framework that accounts for:
+
+- within-subject correlation in repeated LVMI measurements,
+- informative dropout due to death, and
+- dynamic association between biomarker progression and survival.
+
+## Data Description
+
+The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. 
+
+Each row represents a follow-up visits and includes:
+
+### Longitudinal variables
+
+- `num` - patient ID
+- `time` - observed time point, with surgery date as the time origin (years)
+- `lvmi` - left ventricular mass index (LVMI) at follow-up visit
+- `log.lvmi` - natural log transformation of LVMI 
+  
+### Survival variables
+
+- `fuyrs` -  maximum follow-up time, with surgery date as the time origin (years)
+- `status` - censoring indicator (1 = died and 0 = lost at follow-up)
+  
+### Baseline covaraites 
+
+- age
+- sex
+- body surface area (`bsa`)
+- preoperative LV function (`lv`)
+- diabetes (`dm`)
+- valve type (`hs`: homograft vs. stentless)
+  
 ## Objectives
 
 The goals of this project are to:
