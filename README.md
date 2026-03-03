@@ -6,8 +6,6 @@
 **Authors:** Ryan Kitagawa, Linlin Liu, and Nancy Lopez <br>
 **Date:** March 12, 2026
 
-**Primary Reference:** Lim, E., et al. (2008). A longitudinal study of the profile and predictors of left ventricular mass regression after stentless aortic valve replacement. *Ann Thorac Surg.* 2008; 85(6):2026 - 2029.
-
 ## Overview
 
 This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valuve replacement.
@@ -25,9 +23,9 @@ This work extends classical linear mixed-effects model (LMM) and Cox proportiona
 
 ## Data Description
 
-The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. 
+The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. Each row represents a follow-up visits.
 
-Each row represents a follow-up visits and includes:
+Key variables include:
 
 ### Longitudinal variables
 
@@ -40,19 +38,10 @@ Each row represents a follow-up visits and includes:
 
 - `fuyrs` -  maximum follow-up time, with surgery date as the time origin (years)
 - `status` - censoring indicator (1 = died and 0 = lost at follow-up)
-  
-### Baseline covaraites 
 
-- age
-- sex
-- body surface area (`bsa`)
-- preoperative LV function (`lv`)
-- diabetes (`dm`)
-- valve type (`hs`: homograft vs. stentless)
+Baseline covariates include age, sex, body surface area (`bsa`), preoperative LV function (`lv`), valve type (`hs`: homograft vs. stentless), etc.
   
 ## Objectives
-
-The goals of this project are to:
 
 - Fit a shared-parameter joint model (JM) to quantify the association between latent LVMI level and hazard of death.
 - Evaluate whether the slope/rate of change of LVMI adds prognostic value beyond the current level.
@@ -60,16 +49,65 @@ The goals of this project are to:
   
 ## Statistical Methodology
 
-### Longitudinal submodel
-
-We modeled repeated LVMI measurements using a LMM:
+### Longitudinal submodel using LMM
 
 $Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
 
-$m_i(t) = \beta_0 + \beta_1t + \beta^\top Z_i + b_{0i} + b_{i1}t$
+$m_i(t) = \beta_0 + \beta_1t + \beta^\top \textbf{Z}_i + b_{0i} + b_{1i}t$
 
 Random intercepts and slopes allow subject-specific trajectories. 
 
-### Survival submodel
+### Survival submodel using Cox PH
 
+$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
+
+$h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha m_i(t))$,
+
+where
+
+- $m_i(t)$ is the latent true LVMI trajectory, and
+- $\alpha$ quantifies the association between LVMI and hazard of death.
+
+### Slope Parameterization
+
+We extended the model to:
+
+$h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t))$.
+
+Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Incorporating the slope parameter allowed us to assess whether dynamic LVMI progression carries additional prognostic information beyond the current value. This extension is supported in the dynamic prediction literature, where current-value and slope association structures are commonly used to capture different biological mechanisms linking longitudinal biomarkers to survival outcomes.
+
+### Sensitivity Analysis
+
+We evaluated additional baseline covariates in the survival model, alternative association structures, and PH assumption using Schoenfeld residuals. PH assumption was satifised, and LVMI-mortality association was robust to moderate model expansion.
+
+## Repository Structure
+
+├── data/
+│   └── heart.csv
+├── eda/
+│   └── exploratory_analysis.R
+├── models/
+│   ├── lmm_model.R
+│   ├── joint_model_value.R
+│   ├── joint_model_slope.R
+│   └── sensitivity_analysis.R
+├── figures/
+├── report/
+└── README.md
+
+## Software
+
+R packages include:
+
+- `dplyr`
+- `ggplot2`
+- `JM`
+- `MASS`
+- `naniar`
+- `nlme`
+- `survival`
+
+## References
+
+## Acknowledgements
 
