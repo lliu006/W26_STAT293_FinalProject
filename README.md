@@ -10,7 +10,7 @@
 
 ## Overview
 
-This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valuve replacement. 
+This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valuve replacement.
 
 Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess wether:
 
@@ -54,16 +54,22 @@ Each row represents a follow-up visits and includes:
 
 The goals of this project are to:
 
-- Characterize postoperative LVMI trajectories following aortic valve replacement  
-- Evaluate differences in LVMI evolution between valve types  
-- Quantify the association between evolving LVMI and mortality risk  
-- Assess robustness of findings through multiple imputation (MI) and sensitivity analyses 
+- Fit a shared-parameter joint model (JM) to quantify the association between latent LVMI level and hazard of death.
+- Evaluate whether the slope/rate of change of LVMI adds prognostic value beyond the current level.
+- Perform model diagnostics and sensitivity analyses.
+  
+## Statistical Methodology
 
-## Research Questions
+### Longitudinal submodel
 
-**Primary question:** How is the postoperative trajectories of the LVMI following aortic valve replacement associated with time to death, and how does this relationship vary by valve type and baseline patient characteristics?
+We modeled repeated LVMI measurements using a LMM:
 
-**Secondary questions:**
-- What is the average pattern of change in LVMI over time after operation?
-- Do homograft and stentless valves differ in LVMI level and rate of change?
-- Is the underlying LVMI level over time associated with the risk of mortality after operation?
+$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
+
+$m_i(t) = \beta_0 + \beta_1t + \beta^\top Z_i + b_{0i} + b_{i1}t$
+
+Random intercepts and slopes allow subject-specific trajectories. 
+
+### Survival submodel
+
+
