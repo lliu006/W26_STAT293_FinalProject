@@ -82,18 +82,28 @@ We evaluated additional baseline covariates in the survival model, alternative a
 
 ## Repository Structure
 
-├── data/
-│   └── heart.csv
-├── eda/
-│   └── exploratory_analysis.R
-├── models/
-│   ├── lmm_model.R
-│   ├── joint_model_value.R
-│   ├── joint_model_slope.R
-│   └── sensitivity_analysis.R
-├── figures/
-├── report/
-└── README.md
+├── README.md                                 # Project description and workflow
+│
+├── 01_DataSimulation.R                       # All helper functions, singl-run simullation, and GIMME wrapper
+├── 11_Method.Rmd                             # Runs all simulations and writes combine results
+├── 21_Example_and_Analysis.Rmd               # Loads results and creates final summary tables and plots
+├── 31_Full_Code.Rmd                          # GIMME code in its entirety
+│
+├── sim_data/                                 # Auto-generated simulated time series (100 .txt files per run)
+├── sim_results/                              # Auto-generated GIMME output (path counts, plots, model files)
+├── results/                                  # Combined metrics and saved figures
+│   ├── all_results.csv
+│   ├── TPR_vs_T_A_Phi.png             
+│   ├── TPR_A_errorbars.png            
+│   ├── TPR_vs_T_A_Phi_analysis.png     
+│   ├── TPR_A_errorbars_analysis.png   
+│   └── network plot figures
+|
+├── STAT293_FinalProject.Rproj                 # RStudio project file
+├── STAT_293_Final_Project_Presentation.pdf    # Compiled presentation PDF
+├── STAT_293_Final_Project_Presentation.zip    # Prensetation source files
+├── STAT_293_Final_Project_Report.pdf          # Compiled report PDF 
+└── STAT_293_Final_Project_Report.tex          # Report source file        
 
 ## Software
 
@@ -109,5 +119,22 @@ R packages include:
 
 ## References
 
+```bibtex
+@article{lim2008group,
+  title={Longitudinal study of the profile and predictors of left ventricular mass regression after stentless aortic valve replacement},
+  author={Lim, Eric and Ali, Ayyaz and Theodorou, Panagiotis and Sousa, Ines and Ashrafian, Hutan and Chamageorgakis, Themis and Duncan, Alison and Henein, Michael and Diggle, Peter and Pepper, John},
+  journal={NeuroImage},
+  volume={63},
+  number={1},
+  pages={310--319},
+  year={2012}
+}
+```
+
 ## Acknowledgements
 
+- Dr. Esra  for course instruction
+- Lim et al. for foundational work
+- The developers of `JM`, `nlme`, and `survival`
+
+Last Updated: March 2, 2026
