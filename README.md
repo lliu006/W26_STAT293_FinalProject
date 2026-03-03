@@ -85,32 +85,21 @@ We evaluated additional baseline covariates in the survival model, alternative a
 This is the actual foldr and file layout used in this project:
 
 ```text
-├── README.md                                 # Project description and workflow
+├── README.md                                  # Project description and workflow
 │
-├── heart.csv                                 # Dataset used in the project
-├── 01_DataSimulation.R                       # All helper functions, singl-run simullation, and GIMME wrapper
-├── 11_Method.Rmd                             # Runs all simulations and writes combine results
-├── 21_Example_and_Analysis.Rmd               # Loads results and creates final summary tables and plots
-├── 31_Full_Code.Rmd                          # GIMME code in its entirety
+├── heart.csv                                  # Dataset used in the project
+│                               
+├── EDA.Rmd                                    # Exploratory data analysis of the dataset
 │
-├── sim_data/                                 # Auto-generated simulated time series (100 .txt files per run)
-├── sim_results/                              # Auto-generated GIMME output (path counts, plots, model files)
-├── results/                                  # Combined metrics and saved figures
-│   ├── all_results.csv
-│   ├── TPR_vs_T_A_Phi.png             
-│   ├── TPR_A_errorbars.png            
-│   ├── TPR_vs_T_A_Phi_analysis.png     
-│   ├── TPR_A_errorbars_analysis.png   
-│   └── network plot figures
+├── Primary_and_Extension_Modeling.Rmd         # Runs all primary and extension modeling and sensitivity analysis, and outputs results
 |
-├── STAT293_FinalProject.Rproj                 # RStudio project file
 ├── STAT_293_Final_Project_Presentation.pdf    # Compiled presentation PDF
 ├── STAT_293_Final_Project_Presentation.zip    # Prensetation source files
 ├── STAT_293_Final_Project_Report.pdf          # Compiled report PDF 
 └── STAT_293_Final_Project_Report.tex          # Report source file        
 ```
 
-## Software
+## Running the Project
 
 R packages include:
 
