@@ -52,18 +52,16 @@ $$
 
 where
 
-- $Y_{ij} represents the observed LVMI measurement for subject $i$ at time $t_{ij}$
+- $Y_{ij}$ represents the observed LVMI measurement for subject $i$ at time $t_{ij}$
 - $\textbf{Z}_i$ contains baseline covariates, and
-- $b_{0i}, \ b_{1i}$ represent subject-specific random intercepts and slopes.
-
-Random intercepts and slopes allow subject-specific LVMI trajectories over time.
+- $b_{0i}, \ b_{1i}$ represent subject-specific random intercepts and slopes, allowing subject-specific LVMI trajectories over time.
 
 ### Survival submodel using Cox PH
 
 The time-to-event process was modeled using a PH survival model linked to the longitudinal LVMI trajectory.
 
 $$
-h_i(t) = h_0(t) \text{exp}(\boldsymbol{\gamma}^\top \mathbf{X}_i + \alpha m_i(t)),
+h_i(t) = h_0(t) \text{exp}(\boldsymbol{\gamma}^\top \mathbf{X}_i),
 $$
 
 where
@@ -72,6 +70,12 @@ where
 - $h_0(t)$ is the baseline hazard,
 - $\mathbf{X}_i$ represents baseline covariates, and
 - $m_i(t)$ is the latent true LVMI trajectory from the longitudinal model.
+
+### Joint longitudinal-survival model
+
+$$
+h_i(t) = h_0(t) \text{exp}(\boldsymbol{\gamma}^\top \mathbf{X}_i)
+$$
 
 The parameter $\alpha$ quantifies the association between the underlying LVMI level and the risk of mortality. A positive value of $\alpha$ indicates that higher LVMI levels are associated with increased mortality risk.
 
