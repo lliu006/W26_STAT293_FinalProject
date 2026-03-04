@@ -8,9 +8,9 @@
 
 ## Overview
 
-This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valve replacement. Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess whether the current level of LVMI is associated with the risk of mortality.
+This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valve replacement. Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess whether the current level of LVMI is associated with mortality risk. We further extend the analysis by evaluating alternative association structures, such as slope parameterization, and conducting sensitivity analyses to assess the robustness of the findings.
 
-This work extends classical linear mixed-effects model (LMM) and Cox proportional hazards (PH) model into a unified framework that accounts for within-subject correlation in repeated LVMI measurements and informative dropout due to death.
+This work extends classical linear mixed-effects (LMM) and Cox proportional hazards (PH) models into a unified framework that accounts for within-subject correlation in repeated LVMI measurements, informative dropout due to death, and dynamic association between biomarker progression and survival.
 
 ## Key Result
 
@@ -40,13 +40,23 @@ Key variables include:
 
 ### Longitudinal submodel using LMM
 
+The longitudinal evolution of LVMI was modeled using a LMM, which accounts for repeated measurements within patients and subject-specific heterogeneity in trajectories.
+
 $Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
 
-$m_i(t) = \beta_0 + \beta_1t + \beta^\top \textbf{Z}_i + b_{0i} + b_{1i}t$
+$m_i(t) = \Beta_0 + \Beta_1 t + \Beta^\top \textbf{Z}_i + b_{0i} + b_{1i} t$,
+
+where
+
+- $Y_{ij} represents the observed LVMI measurement for subject $i$ at time $t_{ij}$
+- $\textbf{Z}_i$ contains baseline covariates, and
+- $b_{0i}, \ b_{1i}$ represent subject-specific random intercepts and slopes.
 
 Random intercepts and slopes allow subject-specific LVMI trajectories over time.
 
 ### Survival submodel using Cox PH
+
+The time-to-event process was modeled using a PH survival model linked to the longitudinal LVMI trajectory.
 
 $h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha m_i(t))$,
 
@@ -57,19 +67,21 @@ where
 - $\textbf{X}_i$ represents baseline covariates, and
 - $m_i(t)$ is the latent true LVMI trajectory from the longitudinal model.
 
-The parameter $\alpha$ quantifies the association between LVMI and the hazard of death.
+The parameter $\alpha$ quantifies the association between the underlying LVMI level and the risk of mortality. A positive value of $\alpha$ indicates that higher LVMI levels are associated with increased mortality risk.
 
 ### Slope parameterization
 
-We extended the surival model to:
+To assess whether the rate of change of LVMI carries prognostic information beyond its current level, we extended the survival model to include the instantaneous slope of the longitudinal trajectory:
 
 $h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t))$.
 
-Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Incorporating the slope parameter allows assessment of whether dynamic LVMI progression carries additional prognostic information beyond the current level. This extension is supported in the dynamic prediction literature, where current-value and slope association structures are commonly used to capture different biological mechanisms linking longitudinal biomarkers to survival outcomes.
+Here, $m_i'(t)$ represents the derivative or slope of the LVMI trajectory with respect to time. Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Including the slope parameter allows the model to capture this dynamic information. Current-value and slope parameterizations are commonly used in the dynamic prediction literature to represent different biological mechanisms linking longitudinal biomarkers to survival outcomes.
 
 ### Model assumptions and sensitivity analysis
 
-We evaluated additional baseline covariates in the survival model and alternative association structures, and PH assumption using Schoenfeld residuals. PH assumption was satifised, and LVMI-mortality association was robust to moderate model expansion.
+Model diagnostics were conducted for both the longitudinal and survival submodels prior to fitting the joint model. For the LMM, we assessed residual versus fitted plots, Q-Q plots of residuals, and the distribution of random effects to evaluate normality and homoscedasticity assumptions. We also compared linear and quadratic time effects to verify that a linear time specification adequately captured LVMI trajectories.
+
+For the survival submodel, the PH assumption was evaluated using Schoenfeld residual tests and graphical diagnostics, and the functional form of continuous predictors was examined using Martingale residual plots. Sensitivity analyses were conducted by evaluating alternative survival model specifications and association structures (current-value, slope, and combined parameterizations) to assess the robustness of the LVMI–mortality relationship.
 
 ## Repository Structure
 
