@@ -42,9 +42,7 @@ Key variables include:
 
 The longitudinal evolution of LVMI was modeled using a LMM, which accounts for repeated measurements within patients and subject-specific heterogeneity in trajectories.
 
-$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
-
-$m_i(t) = \Beta_0 + \Beta_1 t + \Beta^\top \textbf{Z}_i + b_{0i} + b_{1i} t$,
+$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2), \ \ \ m_i(t) = \Beta_0 + \Beta_1 t + \Beta^\top \textbf{Z}_i + b_{0i} + b_{1i} t$,
 
 where
 
