@@ -8,15 +8,19 @@
 
 ## Overview
 
-This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valve replacement. Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess wether the current level of LVMI is associated with the risk of mortality.
+This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valve replacement. Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess whether the current level of LVMI is associated with the risk of mortality.
 
 This work extends classical linear mixed-effects model (LMM) and Cox proportional hazards (PH) model into a unified framework that accounts for within-subject correlation in repeated LVMI measurements and informative dropout due to death.
 
+## Key Result
+
+The joint model suggests that higher postoperative LVMI levels are associated with increased mortality risk, while the rate of change in LVMI does not provide additional prognostic information beyond the current level.
+
 ## Data Description
 
-The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. Each row represents a follow-up visits.
+The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. Each row represents a follow-up visit.
 
-### Key variables
+Key variables include:
 
 - `num` - patient ID
 - `time` - observed time point, with surgery date as the time origin (years)
@@ -28,9 +32,9 @@ The dataset consists of 988 observations from 256 unique patients undergoing aor
   
 ## Objectives
 
-- Fit a shared-parameter joint model (JM) to quantify the association between latent LVMI level and hazard of death.
-- Evaluate whether the slope/rate of change of LVMI adds prognostic value beyond the current level.
-- Perform model diagnostics and sensitivity analyses.
+- Fit a shared-parameter joint model to quantify the association between the latent LVMI trajectory and the hazard of death.
+- Evaluate whether the slope/rate of change of LVMI adds prognostic value beyond the current LVMI level.
+- Conduct model diagnostics and sensitivity analyses.
   
 ## Statistical Methodology
 
@@ -40,18 +44,20 @@ $Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \
 
 $m_i(t) = \beta_0 + \beta_1t + \beta^\top \textbf{Z}_i + b_{0i} + b_{1i}t$
 
-Random intercepts and slopes allow subject-specific trajectories. 
+Random intercepts and slopes allow subject-specific LVMI trajectories over time.
 
 ### Survival submodel using Cox PH
-
-$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
 
 $h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha m_i(t))$,
 
 where
 
-- $m_i(t)$ is the latent true LVMI trajectory, and
-- $\alpha$ quantifies the association between LVMI and hazard of death.
+- $h_i(t)$ is the hazard of death at time $t$ for subject $i$,
+- $h_0(t)$ is the baseline hazard,
+- $\textbf{X}_i$ represents baseline covariates, and
+- $m_i(t)$ is the latent true LVMI trajectory from the longitudinal model.
+
+The parameter $\alpha$ quantifies the association between LVMI and the hazard of death.
 
 ### Slope parameterization
 
@@ -59,7 +65,7 @@ We extended the surival model to:
 
 $h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t))$.
 
-Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Incorporating the slope parameter allowed us to assess whether dynamic LVMI progression carries additional prognostic information beyond the current value. This extension is supported in the dynamic prediction literature, where current-value and slope association structures are commonly used to capture different biological mechanisms linking longitudinal biomarkers to survival outcomes.
+Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Incorporating the slope parameter allows assessment of whether dynamic LVMI progression carries additional prognostic information beyond the current level. This extension is supported in the dynamic prediction literature, where current-value and slope association structures are commonly used to capture different biological mechanisms linking longitudinal biomarkers to survival outcomes.
 
 ### Model assumptions and sensitivity analysis
 
@@ -76,7 +82,7 @@ This is the file layout used in this project:
 │                               
 ├── EDA.Rmd                                    # Exploratory data analysis of the dataset
 │
-├── Modeling_and_Sens.Rmd                      # Runs all primary and extension modeling, model assumption chekcs, and sensitivity analysis, and outputs results
+├── Modeling_and_Sens.Rmd                      # Runs all primary and extension modeling, model assumption checks, and sensitivity analysis, and outputs results
 |
 ├── STAT_293_Final_Project_Presentation.pdf    # Compiled presentation PDF
 ├── STAT_293_Final_Project_Presentation.zip    # Prensetation source files
@@ -90,25 +96,11 @@ Required R packages include `dplyr`, `ggplot2`, `JM`, `MASS`, `nlme`, and `survi
 
 ### Exploratory data analysis (EDA)
 
-```{r}
-knit("EDA.Rmd")
-```
+Open and knit `EDA.Rmd` in RStudio to reproduce the EDA.
 
-This file:
+### Modeling and sensitivity analyses
 
-- loads the dataset, and
-- runs all primary data analysis before the model building.
-
-### Modeling
-
-```{r}
-knit("Modeling)and_SA.Rmd")
-```
-
-This file:
-
-- loads the dataset, and
-- runs the primary and extension model building process, model assumption, as well as sensitivity analysis.
+Open and knit `Modeling_and_Sens.Rmd` to reproduce the modeling workflow, including assumption checks and sensitivity analyses.
 
 ## Citations
 
@@ -124,7 +116,7 @@ This file:
 }
 
 @article{li2023group,
-  title={Acomparisonof twoapproaches to dynamicprediction: joint modeling and landmark modeling},
+  title={A comparison of two approaches to dynamic prediction: joint modeling and landmark modeling},
   author={Li, Wenhao and Li, Liang and Astor, Brad C},
   journal={Statistics in Medicine},
   volume={42},
@@ -156,8 +148,8 @@ This file:
 
 ## Acknowledgements
 
-- Dr. Esra Kürüm for course instruction
+- Dr. Kürüm for course instruction
 - Lim et al. for foundational work
-- The developers of the packages used
+- The developers of all R packages used in this project
 
 Last Updated: March 3, 2026
