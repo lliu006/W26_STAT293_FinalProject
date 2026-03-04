@@ -42,9 +42,13 @@ Key variables include:
 
 The longitudinal evolution of LVMI was modeled using a LMM, which accounts for repeated measurements within patients and subject-specific heterogeneity in trajectories.
 
-$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
+$$
+Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)
+$$
 
-$m_i(t) = \beta_0 + \beta_1 t + \boldsymbol{\beta}^\top \mathbf{Z}_i + b_{0i} + b_{1i} t$,
+$$
+m_i(t) = \beta_0 + \beta_1 t + \boldsymbol{\beta}^\top \mathbf{Z}_i + b_{0i} + b_{1i} t,
+$$
 
 where
 
@@ -58,7 +62,9 @@ Random intercepts and slopes allow subject-specific LVMI trajectories over time.
 
 The time-to-event process was modeled using a PH survival model linked to the longitudinal LVMI trajectory.
 
-$h_i(t) = h_0(t) \text{exp}(\gamma^\top \mathbf{X}_i + \alpha m_i(t))$,
+$$
+h_i(t) = h_0(t) \text{exp}(\gamma^\top \mathbf{X}_i + \alpha m_i(t)),
+$$
 
 where
 
@@ -73,7 +79,9 @@ The parameter $\alpha$ quantifies the association between the underlying LVMI le
 
 To assess whether the rate of change of LVMI carries prognostic information beyond its current level, we extended the survival model to include the instantaneous slope of the longitudinal trajectory:
 
-$h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t))$.
+$$
+h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t)).
+$$
 
 Here, $m_i'(t)$ represents the derivative or slope of the LVMI trajectory with respect to time. Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Including the slope parameter allows the model to capture this dynamic information. Current-value and slope parameterizations are commonly used in the dynamic prediction literature to represent different biological mechanisms linking longitudinal biomarkers to survival outcomes.
 
