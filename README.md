@@ -8,38 +8,23 @@
 
 ## Overview
 
-This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valuve replacement.
+This project investigates the association between postoperative trajectories of left ventricular mass index (LVMI) and time to death following aortic valve replacement. Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess wether the current level of LVMI is associated with the risk of mortality.
 
-Using data from an observational study with repeated measurements, we apply joint longitudinal-survival modeling to assess wether:
-
-- the current level of LVMI is associated with the risk of mortality, and
-- the slope/rate of change of LVMI provides additional prognostic information.
-
-This work extends classical linear mixed-effects model (LMM) and Cox proportional hazards (PH) model into a unified framework that accounts for:
-
-- within-subject correlation in repeated LVMI measurements,
-- informative dropout due to death, and
-- dynamic association between biomarker progression and survival.
+This work extends classical linear mixed-effects model (LMM) and Cox proportional hazards (PH) model into a unified framework that accounts for within-subject correlation in repeated LVMI measurements and informative dropout due to death.
 
 ## Data Description
 
 The dataset consists of 988 observations from 256 unique patients undergoing aortic valve replacement. Each row represents a follow-up visits.
 
-Key variables include:
-
-### Longitudinal variables
+### Key variables
 
 - `num` - patient ID
 - `time` - observed time point, with surgery date as the time origin (years)
 - `lvmi` - left ventricular mass index (LVMI) at follow-up visit
 - `log.lvmi` - natural log transformation of LVMI 
-  
-### Survival variables
-
 - `fuyrs` -  maximum follow-up time, with surgery date as the time origin (years)
 - `status` - censoring indicator (1 = died and 0 = lost at follow-up)
-
-Baseline covariates include age, sex, body surface area (`bsa`), preoperative LV function (`lv`), valve type (`hs`: homograft vs. stentless), etc.
+- Baseline covariates include age, sex, body surface area (`bsa`), preoperative LV function (`lv`), valve type (`hs`: homograft vs. stentless), etc.
   
 ## Objectives
 
@@ -68,30 +53,30 @@ where
 - $m_i(t)$ is the latent true LVMI trajectory, and
 - $\alpha$ quantifies the association between LVMI and hazard of death.
 
-### Slope Parameterization
+### Slope parameterization
 
-We extended the model to:
+We extended the surival model to:
 
 $h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha_1 m_i(t) + \alpha_2 m_i'(t))$.
 
 Clinically, two patients with the same LVMI value may have different prognoses if one is improving while the other is worsening. Incorporating the slope parameter allowed us to assess whether dynamic LVMI progression carries additional prognostic information beyond the current value. This extension is supported in the dynamic prediction literature, where current-value and slope association structures are commonly used to capture different biological mechanisms linking longitudinal biomarkers to survival outcomes.
 
-### Sensitivity Analysis
+### Model assumptions and sensitivity analysis
 
-We evaluated additional baseline covariates in the survival model, alternative association structures, and PH assumption using Schoenfeld residuals. PH assumption was satifised, and LVMI-mortality association was robust to moderate model expansion.
+We evaluated additional baseline covariates in the survival model and alternative association structures, and PH assumption using Schoenfeld residuals. PH assumption was satifised, and LVMI-mortality association was robust to moderate model expansion.
 
 ## Repository Structure
 
-This is the actual foldr and file layout used in this project:
+This is the file layout used in this project:
 
 ```text
 ├── README.md                                  # Project description and workflow
 │
-├── heart.csv                                  # Dataset used in the project
+├── heart.Rdata                                # Dataset used in the project
 │                               
 ├── EDA.Rmd                                    # Exploratory data analysis of the dataset
 │
-├── Primary_and_Extension_Modeling.Rmd         # Runs all primary and extension modeling and sensitivity analysis, and outputs results
+├── Modeling_and_Sens.Rmd                      # Runs all primary and extension modeling, model assumption chekcs, and sensitivity analysis, and outputs results
 |
 ├── STAT_293_Final_Project_Presentation.pdf    # Compiled presentation PDF
 ├── STAT_293_Final_Project_Presentation.zip    # Prensetation source files
@@ -101,7 +86,7 @@ This is the actual foldr and file layout used in this project:
 
 ## Running the Project
 
-Required R packages include `dplyr`, `ggplot2`, `JM`, `MASS`, `naniar`, `nlme`, and `survival`.
+Required R packages include `dplyr`, `ggplot2`, `JM`, `MASS`, `nlme`, and `survival`.
 
 ### Exploratory data analysis (EDA)
 
@@ -117,13 +102,13 @@ This file:
 ### Modeling
 
 ```{r}
-knit("Primary_and_Extension_Modeling.Rmd")
+knit("Modeling)and_SA.Rmd")
 ```
 
 This file:
 
 - loads the dataset, and
-- runs the primary and extension model building process, as well as sensitivity analysis.
+- runs the primary and extension model building process, model assumption, as well as sensitivity analysis.
 
 ## Citations
 
@@ -173,6 +158,6 @@ This file:
 
 - Dr. Esra Kürüm for course instruction
 - Lim et al. for foundational work
-- The developers of `JM`, `nlme`, and `survival`
+- The developers of the packages used
 
-Last Updated: March 2, 2026
+Last Updated: March 3, 2026
