@@ -42,9 +42,9 @@ Key variables include:
 
 The longitudinal evolution of LVMI was modeled using a LMM, which accounts for repeated measurements within patients and subject-specific heterogeneity in trajectories.
 
-$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$,
+$Y_{ij} = m_i(t_{ij}) + \varepsilon_{ij}, \ \ \ \varepsilon_{ij} \overset{iid} \sim \mathcal{N}(0, \sigma^2)$
 
-$m_i(t) = \Beta_0 + \Beta_1 t + \Beta^\top \textbf{Z}_i + b_{0i} + b_{1i} t$,
+$m_i(t) = \beta_0 + \beta_1 t + \boldsymbol{\beta}^\top \mathbf{Z}_i + b_{0i} + b_{1i} t$,
 
 where
 
@@ -58,13 +58,13 @@ Random intercepts and slopes allow subject-specific LVMI trajectories over time.
 
 The time-to-event process was modeled using a PH survival model linked to the longitudinal LVMI trajectory.
 
-$h_i(t) = h_0(t) \text{exp}(\gamma^\top \textbf{X}_i + \alpha m_i(t))$,
+$h_i(t) = h_0(t) \text{exp}(\gamma^\top \mathbf{X}_i + \alpha m_i(t))$,
 
 where
 
 - $h_i(t)$ is the hazard of death at time $t$ for subject $i$,
 - $h_0(t)$ is the baseline hazard,
-- $\textbf{X}_i$ represents baseline covariates, and
+- $\mathbf{X}_i$ represents baseline covariates, and
 - $m_i(t)$ is the latent true LVMI trajectory from the longitudinal model.
 
 The parameter $\alpha$ quantifies the association between the underlying LVMI level and the risk of mortality. A positive value of $\alpha$ indicates that higher LVMI levels are associated with increased mortality risk.
