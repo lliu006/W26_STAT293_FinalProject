@@ -171,8 +171,8 @@ Open and knit `Modeling_and_Sens.Rmd` to reproduce the modeling workflow, includ
 
 ## Acknowledgements
 
-- Dr. Kürüm for course instruction
+- Dr. Kürüm for course instruction and project guidance
 - Lim et al. for foundational work
 - The developers of all R packages used in this project
 
-Last Updated: March 3, 2026
+Last Updated: March 8, 2026
