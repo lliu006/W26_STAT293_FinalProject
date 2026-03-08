@@ -24,8 +24,7 @@ Key variables include:
 
 - `num` - patient ID
 - `time` - observed time point, with surgery date as the time origin (years)
-- `lvmi` - left ventricular mass index (LVMI) at follow-up visit
-- `log.lvmi` - natural log transformation of LVMI 
+- `log.lvmi` - natural log transformation of left ventricular mass index (LVMI) at follow-up visit
 - `fuyrs` -  maximum follow-up time, with surgery date as the time origin (years)
 - `status` - censoring indicator (1 = died and 0 = lost at follow-up)
 - Baseline covariates include age, sex, body surface area (`bsa`), preoperative LV function (`lv`), valve type (`hs`: homograft vs. stentless), etc.
