@@ -101,7 +101,7 @@ This is the file layout used in this project:
 ```text
 ├── README.md                                  # Project description and workflow
 │
-├── heart.Rdata                                # Dataset used in the project
+├── heart.rdata                                # Dataset used in the project
 │                               
 ├── EDA.Rmd                                    # Exploratory data analysis of the dataset
 │
@@ -175,4 +175,4 @@ Open and knit `Modeling_and_Sens.Rmd` to reproduce the modeling workflow, includ
 - Lim et al. for foundational work
 - The developers of all R packages used in this project
 
-Last Updated: March 8, 2026
+Last Updated: March 9, 2026
