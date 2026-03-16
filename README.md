@@ -129,15 +129,9 @@ This is the file layout used in this project:
 
 ## Running the Project
 
-Required R packages include `dplyr`, `ggplot2`, `JM`, `MASS`, `nlme`, and `survival`.
+Required R packages include the latest versions of `dplyr`, `ggplot2`, `JM`, `MASS`, `nlme`, and `survival`. 
 
-### Exploratory data analysis (EDA)
-
-Open and knit `EDA.Rmd` in RStudio to reproduce the EDA results.
-
-### Modeling and sensitivity analyses
-
-Open and knit `Modeling_and_Sens.Rmd` to reproduce the modeling workflow, including assumption checks and sensitivity analyses.
+Open and knit `STAT_293_Final_Project_EDA.Rmd` in RStudio to reproduce the EDA results. Open and knit `STAT_293_Final_Project_Modeling.Rmd` to reproduce the modeling workflow, including assumption checks and sensitivity analyses.
 
 ## Acknowledgements
 
