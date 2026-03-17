@@ -124,7 +124,7 @@ This is the file layout used in this project:
 ├── STAT_293_Final_Project_Presentation.pdf    # Compiled presentation PDF
 ├── STAT_293_Final_Project_Presentation.zip    # Presentation source files
 ├── STAT_293_Final_Project_Report.pdf          # Compiled report PDF 
-└── STAT_293_Final_Project_Report.tex          # Report source file        
+└── STAT_293_Final_Project_Report.zip          # Report source files       
 ```
 
 ## Running the Project
